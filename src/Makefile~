@@ -1,0 +1,6 @@
+cyniu:cyniu.o
+	$(CXX) $(LDFLAGS) cyniu.o -o cyniu $(LIBS)
+cyniu.o:cyniu.cpp
+	$(CXX) $(CXXFLAGS) -c cyniu.cpp
+clean:
+	rm *.o cyniu

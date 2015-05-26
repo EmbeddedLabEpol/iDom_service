@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <strings.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <iostream>
+
+#define MAX_MSG_LEN 16
+#define SERWER_PORT 2048
+#define SERWER_IP "127.0.0.1"
+int dummy;
+int main( int argc, char ** argv )
+{
+    struct sockaddr_in serwer;
+    int gniazdo;
+    float bufor[ MAX_MSG_LEN ];
+    int max_msg = MAX_MSG_LEN*sizeof(float);
+
+    bzero( & serwer, sizeof( serwer ) );
+    //bzero( bufor, MAX_MSG_LEN );
+    for (int i =0 ; i < MAX_MSG_LEN ; ++i )
+    {
+        bufor[i]=0;
+    }
+    const char * ip = argv[ 1 ];
+    uint16_t port = atoi( argv[ 2 ] );
+    printf( "to jest %s   %s   %s\n", argv[ 0 ], argv[ 1 ], argv[ 2 ] );
+
+    serwer.sin_family = AF_INET;
+    serwer.sin_port = htons( port );
+    if( inet_pton( AF_INET, ip, & serwer.sin_addr ) <= 0 )
+    {
+        perror( "inet_pton() ERROR" );
+        exit( - 1 );
+    }
+
+    if(( gniazdo = socket( AF_INET, SOCK_STREAM, 0 ) ) < 0 )
+    {
+        perror( "socket() ERROR" );
+        exit( - 1 );
+    }
+
+    socklen_t len = sizeof( serwer );
+    if( connect( gniazdo,( struct sockaddr * ) & serwer, len ) < 0 )
+    {
+        perror( "connect() ERROR" );
+        exit( - 1 );
+    }
+    while(1){
+        std::cout << " poczatek while \n";
+    //strcpy( bufor, "Wyslane z clienta" );
+    for (int i =0 ; i < MAX_MSG_LEN ; ++i )
+    {
+        bufor[i]=i-29999;
+    }
+    for (int i =0 ; i < MAX_MSG_LEN ; ++i )
+    {
+        std::cout << bufor[i] << " ";
+    }
+    std::cout << " wysylam\n";
+    if(( send( gniazdo, bufor, max_msg, MSG_DONTWAIT ) ) <= 0 ) // MSG_DONTWAIT
+    {
+        perror( "send() ERROR" );
+        exit( - 1 );
+    }
+
+    //bzero( bufor, MAX_MSG_LEN );
+    for (int i =0 ; i < MAX_MSG_LEN ; ++i )
+    {
+        bufor[i]=0;
+    }
+
+    if(( recv( gniazdo, bufor, max_msg, 0 ) ) <= 0 )
+    {
+        perror( "recv() ERROR" );
+        exit( - 1 );
+    }
+    std::cout << "|Wiadomosc z serwera|: "<< bufor[1]<< std::endl;
+    for (int i =0 ; i < MAX_MSG_LEN ; ++i )
+    {
+        std::cout << bufor[i] << " ";
+    }
+    std::cout <<"\n"<< sizeof(float)<< " to wielkosc floata\n" ;
+
+    std::cin >> dummy;
+    }
+    shutdown( gniazdo, SHUT_RDWR );
+
+    return 0;
+}
+
