@@ -11,60 +11,80 @@
 #include <iostream>
 #include <time.h>
 #include <netdb.h>
-
+#include <arpa/inet.h>
 
 
 
 #define MAX_MSG_LEN 18
+union conv{
+    float f_buf[MAX_MSG_LEN];
+    char c_buf[4*MAX_MSG_LEN];
+};
 
+using namespace std;
 void f_help()
 {
-    std::cout << "\n exit - end program\n stop server - stop server iDom and exit\n test - send test message\n send - send Send own message\n set server id - set new id\n send_to RS232 / NODE\n "<<std::endl;
+     cout << "\nexit - end program"  << endl
+          <<"stop server - stop server iDom and exit" << endl
+          <<"test - send test message"<<endl
+          <<"send - send Send own message" << endl
+          <<"set server id - set new id" << endl
+          <<"send_to RS232 / NODE  "<< endl;
 }
+
+
+
+
 void Send_and_recv (int &gniazdo ,float  bufor[MAX_MSG_LEN],int &max_msg)
-{
+{  conv msg;
     ///  to w funkcji dac
     for (int i =0 ; i < MAX_MSG_LEN ; ++i )
     {
-        std::cout << bufor[i] << " ";
+        msg.f_buf[i]= bufor[i] ;
     }
-    std::cout << " wysylam\n";
-    if(( send( gniazdo, bufor, max_msg, MSG_DONTWAIT ) ) <= 0 ) // MSG_DONTWAIT
+     cout << " wysylam\n";
+int dane;
+    if(( dane = send( gniazdo, msg.c_buf/*bufor*/, max_msg, MSG_DONTWAIT ) ) <= 0 ) // MSG_DONTWAIT
     {
         perror( "send() ERROR" );
         exit( - 1 );
     }
-
+    std::cout << "wyslalem ilosc danych   " << dane << std::endl;
     //bzero( bufor, MAX_MSG_LEN );
     for (int i =0 ; i < MAX_MSG_LEN ; ++i )
     {
         bufor[i]=0;
     }
 
-    std::cout << " przed recv \n";
+     cout << " przed recv \n";
 
-    if(( recv( gniazdo, bufor, max_msg, 0 ) ) <= 0 )
+    if(( dane = recv( gniazdo,  msg.c_buf/*bufor*/, max_msg, 0 ) ) <= 0 )
     {
         perror( "recv() ERROR" );
         exit( - 1 );
 
     }
+    for (int i =0 ; i < MAX_MSG_LEN ; ++i )
+    {
+         bufor[i]= msg.f_buf[i] ;
+    }
+    cout << "odebralem danych " << dane << endl;
 //ssize_t bytes_recieved = -1;
 
 //while (bytes_recieved == -1){
 //    bytes_recieved = recv( gniazdo, bufor, max_msg, MSG_DONTWAIT );
 
-//    if (bytes_recieved == 0) std::cout << "host shut down." << std::endl ;
-//    if (bytes_recieved == -1)std::cout << "recieve error!" << std::endl ;
-//    std::cout << bytes_recieved << " bytes recieved :" << std::endl;
+//    if (bytes_recieved == 0)  cout << "host shut down." <<  endl ;
+//    if (bytes_recieved == -1) cout << "recieve error!" <<  endl ;
+//     cout << bytes_recieved << " bytes recieved :" <<  endl;
 //}
 
-    std::cout << "|Wiadomosc z serwera|: "<< bufor[1]<< std::endl;
+     cout << "|Wiadomosc z serwera|: "<< bufor[1]<<  endl;
     for (int i =0 ; i < MAX_MSG_LEN ; ++i )
     {
-        std::cout << bufor[i] << " ";
+         cout << bufor[i] << " ";
     }
-    std::cout <<"\n"<< sizeof(float)<< " to wielkosc floata\n" ;
+     cout <<"\n"<< sizeof(float)<< " to wielkosc floata\n" ;
 } // end Send_and_recv
 
 
@@ -72,12 +92,12 @@ void Send_and_recv (int &gniazdo ,float  bufor[MAX_MSG_LEN],int &max_msg)
 int main( int argc, char ** argv )
 {   if (argc <3)
     {   printf("\e[0;31m");//a teraz na czerwono
-        std::cout << "Try: \e[0;1m"<< argv[0] << "\e[0;33m [ip_adres] [port]\n";
+         cout << "Try: \e[0;1m"<< argv[0] << "\e[0;33m [ip_adres] [port]\n";
         printf("\e[0;0m");//powrot do normy
         return 0;
     }
 
-    std::string command;
+     string command;
     bool go_while = true;
     struct sockaddr_in serwer;
     int gniazdo;
@@ -90,7 +110,7 @@ int main( int argc, char ** argv )
     {
         bufor[i]=0;
     }
-      std::string s_ip;
+       string s_ip;
     // przerobka  adresu na ip . //////////////////////////////////
 
     int i;
@@ -120,7 +140,7 @@ int main( int argc, char ** argv )
     printf( "\n" );
     /////////// koniec ./////////////////////////////////
 
-    //std::cout << " string " << s_ip << std::endl;
+    // cout << " string " << s_ip <<  endl;
     const char * ip = s_ip.c_str();
     uint16_t port = atoi( argv[ 2 ] );
 
@@ -144,10 +164,10 @@ int main( int argc, char ** argv )
         perror( "connect() ERROR" );
         exit( - 1 );
     }
-    std::cout << " polaczono z serwerem \n";
+     cout << " polaczono z serwerem \n";
     do {
-        std::cout << "\nSet command: \n> ";
-        std::cin >> command;
+         cout << "\nSet command: \n> ";
+         cin >> command;
 
         if (command=="exit")
         {
@@ -156,7 +176,7 @@ int main( int argc, char ** argv )
         }
         else if (command=="stop")
         {
-            std::cin >> command;
+             cin >> command;
             if (command=="server")
             {
                 go_while = false;
@@ -167,19 +187,19 @@ int main( int argc, char ** argv )
             }
             else
             {
-                std::cout << "unknown command "<< command << std::endl;
+                 cout << "unknown command "<< command <<  endl;
             }
         }
 
         else if (command=="send_to")
         {
-            std::cin >> command;
+             cin >> command;
             if (command=="RS232")
             {
 
                 bufor[16]=11;
                 int przerwa;
-                std::cin >> przerwa;
+                 cin >> przerwa;
                 bufor[0]=bufor[2]=0;
                 bufor[1]=bufor[3]=-1;
                 int licznik =30000;
@@ -201,7 +221,7 @@ int main( int argc, char ** argv )
             else if (command=="NODE_SPAM")
             {
                 int przerwa;
-                std::cin >> przerwa;
+                 cin >> przerwa;
                 bufor[0]=bufor[2]=0;
                 bufor[1]=bufor[3]=-1;
                 int licznik =30000;
@@ -214,7 +234,7 @@ int main( int argc, char ** argv )
             }
             else
             {
-                std::cout << "unknown command "<< command << std::endl;
+                 cout << "unknown command "<< command <<  endl;
             }
         }
         else if (command=="test")
@@ -228,13 +248,13 @@ int main( int argc, char ** argv )
 
         else if (command=="set")
         {
-            std::cin >> command;
+             cin >> command;
             if (command=="server")
             {
-                std::cin >> command;
+                 cin >> command;
                 if (command=="id")
                 { float id;
-                    std::cin >> id;
+                     cin >> id;
                     bufor[0] = id; bufor[1]=bufor[2]=13;
                     bufor[3] = 31;
                     Send_and_recv(gniazdo, bufor, max_msg);
@@ -248,7 +268,7 @@ int main( int argc, char ** argv )
         {
             for (unsigned int i = 0; i < MAX_MSG_LEN; ++i)
             {
-                std::cin >> bufor[i];
+                 cin >> bufor[i];
             }
             Send_and_recv(gniazdo, bufor, max_msg);
         }
@@ -260,7 +280,7 @@ int main( int argc, char ** argv )
         else if (command=="spam")
         {
             int przerwa;
-            std::cin >> przerwa;
+             cin >> przerwa;
             bufor[0]=bufor[2]=0;
             bufor[1]=bufor[3]=-1;
             int licznik =10000;
@@ -277,14 +297,14 @@ int main( int argc, char ** argv )
 
         else
         {
-            std::cout << "unknown command: "<<command<<" \nTry \"help\"\n\n";
+             cout << "unknown command: "<<command<<" \nTry \"help\"\n\n";
             continue;
         }
 
 
     } while(go_while);
-    std::cout << "Koniec";
+     cout << "Koniec";
     shutdown( gniazdo, SHUT_RDWR );
-    std::cout << "." << std::endl;
+     cout << "." <<  endl;
     return 0;
 }
