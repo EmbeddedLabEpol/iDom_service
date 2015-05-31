@@ -17,7 +17,7 @@
 
 #define MAX_MSG_LEN 18
 union conv{
-    float f_buf[MAX_MSG_LEN];
+    int32_t f_buf[MAX_MSG_LEN];
     char c_buf[4*MAX_MSG_LEN];
 };
 
@@ -32,16 +32,41 @@ void f_help()
           <<"send_to RS232 / NODE  "<< endl;
 }
 
+uint32_t ChangeEndianness(uint32_t value)
+{
+  if (__BYTE_ORDER == __BIG_ENDIAN)
+  {
+   //printf("big-endian");
+   return value;
+  }
+  else if( __BYTE_ORDER == __LITTLE_ENDIAN)
+   { //printf("little-endian");
+    uint32_t result = 0;
+    result |= (value & 0x000000FF) << 24;
+    result |= (value & 0x0000FF00) << 8;
+    result |= (value & 0x00FF0000) >> 8;
+    result |= (value & 0xFF000000) >> 24;
 
+    return result;
+    }
+}
+void binary(int val)
+{    for (int i = 31; i >= 0; i--)
+    {
+        if ((i + 1) % 8 == 0)            cout << ' ';        cout << ((val >> i) % 2);    }    cout << endl;}
 
+void Send_and_recv (int &gniazdo ,int32_t  bufor[MAX_MSG_LEN],int &max_msg)
+{
 
-void Send_and_recv (int &gniazdo ,float  bufor[MAX_MSG_LEN],int &max_msg)
-{  conv msg;
+    //binary(bufor[2]);
+    conv msg;
     ///  to w funkcji dac
     for (int i =0 ; i < MAX_MSG_LEN ; ++i )
     {
-        msg.f_buf[i]= bufor[i] ;
+        msg.f_buf[i]= ChangeEndianness( bufor[i]) ;
     }
+
+   // binary(msg.f_buf[2]);
      cout << " wysylam\n";
 int dane;
     if(( dane = send( gniazdo, msg.c_buf/*bufor*/, max_msg, MSG_DONTWAIT ) ) <= 0 ) // MSG_DONTWAIT
@@ -64,10 +89,12 @@ int dane;
         exit( - 1 );
 
     }
+   // binary(bufor[2]);
     for (int i =0 ; i < MAX_MSG_LEN ; ++i )
     {
-         bufor[i]= msg.f_buf[i] ;
+         bufor[i]= ChangeEndianness( msg.f_buf[i]) ;
     }
+    //binary(bufor[2]);
     cout << "odebralem danych " << dane << endl;
 //ssize_t bytes_recieved = -1;
 
@@ -84,7 +111,7 @@ int dane;
     {
          cout << bufor[i] << " ";
     }
-     cout <<"\n"<< sizeof(float)<< " to wielkosc floata\n" ;
+     cout <<"\n"<< sizeof(int32_t)<< " to wielkosc int32_ta\n" ;
 } // end Send_and_recv
 
 
@@ -101,8 +128,8 @@ int main( int argc, char ** argv )
     bool go_while = true;
     struct sockaddr_in serwer;
     int gniazdo;
-    float bufor[ MAX_MSG_LEN ];
-    int max_msg = MAX_MSG_LEN*sizeof(float);
+    int32_t bufor[ MAX_MSG_LEN ];
+    int max_msg = MAX_MSG_LEN*sizeof(int32_t);
 
     bzero( & serwer, sizeof( serwer ) );
     //bzero( bufor, MAX_MSG_LEN );
@@ -253,7 +280,7 @@ int main( int argc, char ** argv )
             {
                  cin >> command;
                 if (command=="id")
-                { float id;
+                { int32_t id;
                      cin >> id;
                     bufor[0] = id; bufor[1]=bufor[2]=13;
                     bufor[3] = 31;
