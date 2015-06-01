@@ -1,5 +1,5 @@
 iDom_service:iDom_service.o
-	$(CXX) $(LDFLAGS) iDom_service.o -o iDom_service $(LIBS)
+	$(CXX) $(LDFLAGS) iDom_service.o -o iDom_service $(LIBS)-lpthread
 iDom_service.o:iDom_service.cpp
 	$(CXX) $(CXXFLAGS) -c iDom_service.cpp
 clean:

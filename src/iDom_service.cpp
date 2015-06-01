@@ -29,7 +29,8 @@ void f_help()
           <<"test - send test message"<<endl
           <<"send - send Send own message" << endl
           <<"set server id - set new id" << endl
-          <<"send_to RS232 / NODE  "<< endl;
+          <<"send_to RS232 / NODE  "<< endl
+          <<"NODE_SPAM  - send test spam to node" <<endl;
 }
 
 uint32_t ChangeEndianness(uint32_t value)
@@ -124,10 +125,14 @@ int main( int argc, char ** argv )
         return 0;
     }
 
+
+
+
      string command;
     bool go_while = true;
     struct sockaddr_in serwer;
     int gniazdo;
+    int master_server_id = -1001;
     int32_t bufor[ MAX_MSG_LEN ];
     int max_msg = MAX_MSG_LEN*sizeof(int32_t);
 
@@ -241,7 +246,8 @@ int main( int argc, char ** argv )
             else if (command=="NODE")
             {
 
-                bufor[16]=1001;
+                bufor[16]=master_server_id;
+                cout << "master server id " << bufor[16] << endl;
                 Send_and_recv(gniazdo, bufor, max_msg);
 
             }
@@ -253,7 +259,7 @@ int main( int argc, char ** argv )
                 bufor[1]=bufor[3]=-1;
                 int licznik =30000;
                 while (licznik)
-                {    bufor[16]=1001;
+                {    bufor[16]=master_server_id;
                     sleep (przerwa);
                     Send_and_recv(gniazdo, bufor, max_msg);
                     --licznik;
@@ -280,9 +286,9 @@ int main( int argc, char ** argv )
             {
                  cin >> command;
                 if (command=="id")
-                { int32_t id;
-                     cin >> id;
-                    bufor[0] = id; bufor[1]=bufor[2]=13;
+                {
+                     cin >> master_server_id;
+                    bufor[0] = master_server_id; bufor[1]=bufor[2]=13;
                     bufor[3] = 31;
                     Send_and_recv(gniazdo, bufor, max_msg);
 
